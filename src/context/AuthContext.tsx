@@ -17,12 +17,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Safe client IDs to prevent Google.useAuthRequest from throwing during SSR / Web render when env is unset
+  const safeWebClientId = APP_CONFIG.GOOGLE_CLIENT_ID_WEB || 'placeholder-web-id.apps.googleusercontent.com';
+  const safeIosClientId = APP_CONFIG.GOOGLE_CLIENT_ID_IOS || 'placeholder-ios-id.apps.googleusercontent.com';
+  const safeAndroidClientId = APP_CONFIG.GOOGLE_CLIENT_ID_ANDROID || 'placeholder-android-id.apps.googleusercontent.com';
+
   // Configure Expo Google Auth Request
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: APP_CONFIG.GOOGLE_CLIENT_ID_WEB || undefined,
-    webClientId: APP_CONFIG.GOOGLE_CLIENT_ID_WEB || undefined,
-    iosClientId: APP_CONFIG.GOOGLE_CLIENT_ID_IOS || undefined,
-    androidClientId: APP_CONFIG.GOOGLE_CLIENT_ID_ANDROID || undefined,
+    clientId: safeWebClientId,
+    webClientId: safeWebClientId,
+    iosClientId: safeIosClientId,
+    androidClientId: safeAndroidClientId,
     scopes: ['profile', 'email'],
   });
 
