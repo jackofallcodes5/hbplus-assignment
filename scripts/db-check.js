@@ -25,9 +25,12 @@ function loadEnv() {
 
 loadEnv();
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  'postgresql://postgres.toezjlwmafgdeaknkpgq:Gaurang%401235@aws-0-ap-south-1.pooler.supabase.com:6543/postgres';
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.error('Error: DATABASE_URL is not set in environment variables or .env file.');
+  process.exit(1);
+}
 
 async function checkDatabase() {
   console.log('Connecting to Supabase PostgreSQL at:', connectionString.split('@')[1] || connectionString);
