@@ -72,6 +72,9 @@ EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=your-google-android-client-id.apps.googleus
 # Supabase Database Credentials (from supabase.com project settings)
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Direct PostgreSQL Database Connection String (Transaction Pooler)
+DATABASE_URL=postgresql://postgres.[project-id]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 ```
 
 ---
@@ -164,6 +167,13 @@ npm run ios
 Runs the test suite for email domain verification logic using Node's native test runner:
 ```bash
 npm test
+```
+
+### 6. Verify Database Connection & Tables
+
+Connects directly to your Supabase PostgreSQL database to verify connection health and inspect stored users/audit logs:
+```bash
+npm run db:check
 ```
 
 ---
