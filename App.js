@@ -2,26 +2,24 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { LoginScreen } from './src/screens/LoginScreen';
-import { DashboardScreen } from './src/screens/DashboardScreen';
+import { AuthProvider, useAuth } from './src/context/AuthContext.js';
+import { LoginScreen } from './src/screens/LoginScreen.js';
+import { DashboardScreen } from './src/screens/DashboardScreen.js';
 
-const RootNavigator: React.FC = () => {
+const RootNavigator = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  // Web URL sync & route protection for browser environments
+  // Web Browser Route Guard & URL synchronization
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const currentPath = window.location.hash || window.location.pathname;
-
       if (!isLoading) {
         if (isAuthenticated && user) {
-          // If authenticated, ensure URL is on /dashboard
+          // If authenticated, keep URL synchronized on /dashboard
           if (window.location.hash !== '#/dashboard') {
             window.history.replaceState(null, '', '#/dashboard');
           }
         } else {
-          // Protected Route Guard: If unauthenticated, redirect /dashboard attempts to /login
+          // Protected Route Guard: If not authenticated, restrict direct access and redirect to /login
           if (window.location.hash !== '#/login') {
             window.history.replaceState(null, '', '#/login');
           }
@@ -30,7 +28,7 @@ const RootNavigator: React.FC = () => {
     }
   }, [isAuthenticated, isLoading, user]);
 
-  // Loading / Splash Screen
+  // Loading State / Splash screen during credential check
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -46,8 +44,8 @@ const RootNavigator: React.FC = () => {
   }
 
   // Protected Route Logic:
-  // If not authenticated, always show LoginScreen
-  // If authenticated with valid domain session, show DashboardScreen
+  // Render DashboardScreen ONLY when authenticated with authorized domain
+  // Otherwise render LoginScreen
   return isAuthenticated && user ? <DashboardScreen /> : <LoginScreen />;
 };
 

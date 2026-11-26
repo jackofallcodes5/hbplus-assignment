@@ -1,7 +1,7 @@
 {
   "name": "hbplus-auth-app",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "index.js",
   "dependencies": {
     "@expo/metro-runtime": "~58.0.17",
     "@expo/vector-icons": "^15.0.2",
@@ -31,7 +31,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build": "expo export -p web",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "node --test src/utils/domainValidator.test.js"
   },
   "private": true
 }
