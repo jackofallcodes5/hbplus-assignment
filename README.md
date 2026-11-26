@@ -1,87 +1,57 @@
-# HB+ Secure Portal (React Native / JavaScript)
+# HB+ Secure Portal
 
-A secure cross-platform **React Native (Web, Android & iOS)** application written entirely in clean **JavaScript**, powered by **Google OAuth 2.0**, strict **Dynamic Domain Restriction**, **Protected Routing**, and **Supabase Database** integration.
+> **Production Deployment (Netlify)**: [https://hbplusassessmentgaurang.netlify.app](https://hbplusassessmentgaurang.netlify.app)
 
----
-
-## 📋 Features Overview
-
-- **100% JavaScript**: Clean, modern ES6+ React Native implementation.
-- **Dynamic Domain Gatekeeper**: No domains or secrets are hardcoded in the codebase. The allowed official domain is configured dynamically via environment variables (`EXPO_PUBLIC_ALLOWED_DOMAIN`).
-  - Allowed: official domain email (e.g. `example@hbplus.fit`) $\rightarrow$ Grants access, persists to database, redirects to Dashboard.
-  - Restricted: external email (e.g. `example@gmail.com`) $\rightarrow$ Denies access, discards tokens, displays:
-    > *"Access restricted. Please login using your official domain email."*
-- **Google OAuth 2.0 Authentication**: Standard PKCE flow via `expo-auth-session`.
-- **Normal Email Login**: Supports direct official email login with real-time domain verification.
-- **Protected Dashboard Page**:
-  - Displays `"Hello, [User]!"` greeting, user role badge (`Admin` or `User`), and account status.
-  - Features a prominent **"Log Out"** button.
-  - Upon logout, clears persistent credentials and exits immediately back to the Login screen.
-- **Supabase Database Storage**: User profiles, roles, and authentication audit logs are synced to Supabase (with automatic local storage fallback).
-- **Protected Route Guards**: Direct browser URL access to `#/dashboard` without active login automatically redirects to `#/login`.
+A secure cross-platform **React Native (Web & Mobile)** application written in **JavaScript**, featuring **Google OAuth 2.0**, strict **Dynamic Domain Restriction**, **Protected Routing**, and **Supabase Database** integration.
 
 ---
 
-## 🔄 Authentication Architecture
+## 🌐 B. Deployment Link
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant UI as Login Page
-    participant OAuth as Google OAuth / Input
-    participant Gatekeeper as Domain Gatekeeper
-    participant Supabase as Supabase Database
-    participant Dashboard as Protected Dashboard
+* **Live Web App**: [https://hbplusassessmentgaurang.netlify.app](https://hbplusassessmentgaurang.netlify.app)
+* **GitHub Repository**: [https://github.com/jackofallcodes5/hbplus-assignment](https://github.com/jackofallcodes5/hbplus-assignment)
 
-    User->>UI: Click "Sign in with Google" or Normal Login
-    UI->>OAuth: Request user credentials
-    OAuth-->>UI: Return email & profile
-    UI->>Gatekeeper: validateEmailDomain(email, ALLOWED_DOMAIN)
+---
 
-    alt Email matches configured official domain
-        Gatekeeper-->>UI: ALLOWED
-        UI->>Supabase: Save/Upsert user profile & log ALLOWED event
-        UI->>Dashboard: Render Dashboard (Hello [User]! + Log Out)
-    else Email belongs to external domain (e.g. @gmail.com)
-        Gatekeeper-->>UI: DENIED
-        UI->>Supabase: Log DENIED security event
-        UI->>UI: Discard session tokens & show error
-        UI-->>User: "Access restricted. Please login using your official domain email."
-    end
+## 📖 A. Core Documentation
+
+### 1. Setup Instructions
+
+#### Prerequisites
+- Node.js (v18 or higher recommended, tested on Node v22)
+- npm or bun
+
+#### Step 1: Clone and Install
+```bash
+git clone https://github.com/jackofallcodes5/hbplus-assignment.git
+cd hbplus-assignment
+npm install
 ```
 
----
-
-## ⚙️ Environment Variables Setup
-
-Create a `.env` file in the root directory. **Do not hardcode passwords, API keys, or domain names in source files**:
-
+#### Step 2: Configure Environment Variables
+Create a `.env` file in the project root:
 ```env
-# Official allowed domain (no '@' prefix, strictly lowercase)
+# Target official domain restricted exclusively for login access
 EXPO_PUBLIC_ALLOWED_DOMAIN=hbplus.fit
 
-# Admin email list (comma-separated) for Role-Based Access
+# Admin email list (comma-separated) for Role-Based Access Control
 EXPO_PUBLIC_ADMIN_EMAILS=admin@hbplus.fit
 
-# Google OAuth 2.0 Client IDs (from Google Cloud Console)
-EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB=your-google-web-client-id.apps.googleusercontent.com
-EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS=your-google-ios-client-id.apps.googleusercontent.com
-EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=your-google-android-client-id.apps.googleusercontent.com
+# Google OAuth 2.0 Client IDs (Google Cloud Console)
+EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB=your-web-client-id.apps.googleusercontent.com
+EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS=your-ios-client-id.apps.googleusercontent.com
+EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID=your-android-client-id.apps.googleusercontent.com
 
-# Supabase Database Credentials (from supabase.com project settings)
-EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+# Supabase REST API (Project: toezjlwmafgdeaknkpgq)
+EXPO_PUBLIC_SUPABASE_URL=https://toezjlwmafgdeaknkpgq.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 
 # Direct PostgreSQL Database Connection String (Transaction Pooler)
 DATABASE_URL=postgresql://postgres.[project-id]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 ```
 
----
-
-## 🗄️ Supabase Database Schema
-
-To set up your database on [Supabase](https://supabase.com), go to the **SQL Editor** in your Supabase dashboard and run the following script:
+#### Step 3: Supabase Database Schema
+In your Supabase project's **SQL Editor**, run the following schema to initialize tables and Row Level Security (RLS):
 
 ```sql
 -- 1. Create Users Table
@@ -111,7 +81,7 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
--- 4. Public / Anon Access Policies for Demo / Mobile Client
+-- 4. Public Policies
 CREATE POLICY "Allow anonymous read users" ON public.users FOR SELECT USING (true);
 CREATE POLICY "Allow anonymous upsert users" ON public.users FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anonymous update users" ON public.users FOR UPDATE USING (true);
@@ -120,159 +90,214 @@ CREATE POLICY "Allow anonymous insert audit_logs" ON public.audit_logs FOR INSER
 CREATE POLICY "Allow anonymous read audit_logs" ON public.audit_logs FOR SELECT USING (true);
 ```
 
----
-
-## 🚀 How to Run the Code
-
-### 1. Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/jackofallcodes5/hbplus-assignment.git
-cd hbplus-assignment
-
-# Install dependencies
-npm install
-```
-
-### 2. Run on Web Browser
-
-```bash
-# Start development server on Web
-npm run web
-# Or: npx expo start --web
-```
-Open **`http://localhost:8081`** in your browser.
-
-### 3. Run on Android Emulator
-
-1. Open Android Studio and launch any Virtual Device (AVD).
-2. Run the command:
-```bash
-npm run android
-# Or: npx expo start --android
-```
-
-### 4. Run on iOS Simulator (macOS only)
-
-1. Open Xcode Simulator.
-2. Run the command:
-```bash
-npm run ios
-# Or: npx expo start --ios
-```
-
-### 5. Run Automated Unit Tests
-
-Runs the test suite for email domain verification logic using Node's native test runner:
-```bash
-npm test
-```
-
-### 6. Verify Database Connection & Tables
-
-Connects directly to your Supabase PostgreSQL database to verify connection health and inspect stored users/audit logs:
+#### Step 4: Verify Database Connection
+Verify that your database is reachable and configured properly:
 ```bash
 npm run db:check
 ```
 
 ---
 
-## 📦 How to Build Output App Files (APK & iOS IPA)
+### 2. Authentication Flow
 
-### Option A: Cloud Build using EAS (Recommended - No Android Studio/Xcode required)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant UI as Login Page
+    participant OAuth as Google OAuth / Normal Input
+    participant Gatekeeper as Domain Gatekeeper
+    participant Supabase as Supabase Database
+    participant Dashboard as Protected Dashboard
 
-1. Install EAS CLI and login:
-   ```bash
-   npx eas-cli login
-   ```
-2. Configure build project:
-   ```bash
-   npx eas-cli build:configure
-   ```
-3. **Build Android APK (Direct installable file)**:
-   ```bash
-   npx eas-cli build -p android --profile preview
-   ```
-   *EAS will compile the `.apk` in the cloud and provide a direct download link and QR code to install on any Android device.*
+    User->>UI: Click "Sign in with Google" or Normal Login
+    UI->>OAuth: Request user credentials
+    OAuth-->>UI: Return email & profile info
+    UI->>Gatekeeper: validateEmailDomain(email, ALLOWED_DOMAIN)
 
-4. **Build iOS App (Simulator build or Ad-Hoc IPA)**:
-   ```bash
-   npx eas-cli build -p ios --profile preview
-   ```
-
-### Option B: Local Android APK Generation
-
-If you have the Android SDK and Java installed locally:
-
-```bash
-# Generate native android/ and ios/ folders (Prebuild)
-npx expo prebuild
-
-# Build Release APK directly
-cd android
-./gradlew assembleRelease
+    alt Email domain matches configured domain (e.g. employee@hbplus.fit)
+        Gatekeeper-->>UI: ALLOWED
+        UI->>Supabase: Save/Upsert user profile & log ALLOWED event
+        UI->>Dashboard: Render Dashboard ("Hello [Name]!" + Log Out button)
+    else Email belongs to external domain (e.g. example@gmail.com)
+        Gatekeeper-->>UI: DENIED
+        UI->>Supabase: Log DENIED security attempt in audit_logs
+        UI->>UI: Discard session tokens immediately
+        UI-->>User: Show Error: "Access restricted. Please login using your official domain email."
+    end
 ```
-Your compiled APK will be output to:
-`android/app/build/outputs/apk/release/app-release.apk`
+
+#### Flow Summary:
+1. **Trigger**: User clicks the Google Sign-In button or submits via the normal official email field.
+2. **OAuth / Input Processing**: Retrieves authenticated email and profile details.
+3. **Domain Gatekeeper Check**: Strictly compares the user's email domain against the dynamically loaded official domain from `EXPO_PUBLIC_ALLOWED_DOMAIN`.
+4. **Allowed Domain (`@hbplus.fit`)**:
+   - Access granted.
+   - User profile saved/updated in Supabase `public.users`.
+   - Security audit event recorded as `ALLOWED`.
+   - State redirects to the protected Dashboard displaying `"Hello, [Name]!"` and a prominent **Log Out** button.
+5. **Restricted Domain (`@gmail.com`, `@yahoo.com`, etc.)**:
+   - Access denied.
+   - Any active session tokens are wiped immediately.
+   - Attempt logged as `DENIED` in Supabase `public.audit_logs`.
+   - Required exact error banner displayed:
+     > *"Access restricted. Please login using your official domain email."*
+6. **Logout**:
+   - Clicking **Log Out** clears persistent credentials from storage and returns the user to the login screen.
+7. **Protected Route Guard**:
+   - Direct web URL access to `#/dashboard` without an active authenticated session automatically redirects back to `#/login`.
 
 ---
 
-## 💻 Complete Source Code Listing
+### 3. How Domain Restriction Works
 
-Here is the complete source code for all project files in plain JavaScript.
+The validation logic is isolated in [`src/utils/domainValidator.js`](src/utils/domainValidator.js) with **zero hardcoded values**:
+
+```javascript
+import { APP_CONFIG, RESTRICTED_DOMAIN_ERROR_MESSAGE } from '../config.js';
+
+export function validateEmailDomain(email, allowedDomainOverride = null) {
+  // Domain dynamically read from environment variables
+  const allowedDomain = (
+    allowedDomainOverride !== null ? allowedDomainOverride : APP_CONFIG.ALLOWED_DOMAIN
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!email || typeof email !== 'string') {
+    return { isValid: false, error: 'Please enter a valid email address.', domain: null };
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const atIndex = cleanEmail.lastIndexOf('@');
+
+  if (atIndex <= 0 || atIndex === cleanEmail.length - 1) {
+    return { isValid: false, error: 'Please enter a valid email address format.', domain: null };
+  }
+
+  const domain = cleanEmail.substring(atIndex + 1);
+
+  // Strict domain match check
+  if (domain !== allowedDomain) {
+    return {
+      isValid: false,
+      error: RESTRICTED_DOMAIN_ERROR_MESSAGE, // "Access restricted. Please login using your official domain email."
+      domain,
+    };
+  }
+
+  return { isValid: true, error: null, domain };
+}
+```
+
+#### Security Highlights:
+- **No Hardcoding**: The allowed domain is configured via `EXPO_PUBLIC_ALLOWED_DOMAIN` in `.env`.
+- **Normalization**: Automatically strips whitespace and converts emails and domains to lowercase before evaluation.
+- **Spoofing Prevention**: Strict substring matching (`atIndex + 1`) prevents subdomain spoofing attacks (e.g. `user@hbplus.fit.attacker.com` is safely rejected).
+- **Session Verification**: The domain is re-checked on app launch during session restoration from local storage.
+
+---
+
+## 💻 Running the App
+
+### 1. Web Browser
+```bash
+npm run web
+# Opens at http://localhost:8081
+```
+
+### 2. Android Emulator
+```bash
+npm run android
+```
+
+### 3. iOS Simulator (macOS)
+```bash
+npm run ios
+```
+
+### 4. Run Automated Unit Tests
+```bash
+npm test
+# Executes 7 automated test suites for domain verification using Node's native test runner
+```
+
+---
+
+## 📦 Building Standalone App Files (APK & iOS IPA)
+
+### Android APK (Direct installable file)
+```bash
+# Cloud build via EAS (Generates direct .apk download link)
+npx eas-cli build -p android --profile preview
+
+# Or local build using Gradle:
+npx expo prebuild
+cd android && ./gradlew assembleRelease
+# Output: android/app/build/outputs/apk/release/app-release.apk
+```
+
+### iOS App (.ipa / Simulator build)
+```bash
+npx eas-cli build -p ios --profile preview
+```
+
+---
+
+## 📂 Project Structure
+
+```
+├── App.js                          # Root navigator with protected route guards
+├── index.js                        # Root entry point
+├── netlify.toml                    # Netlify deployment configuration & SPA redirects
+├── package.json                    # Dependencies & scripts
+├── scripts/
+│   └── db-check.js                 # Database health & tables inspection script
+└── src/
+    ├── config.js                   # Dynamic environment variable loader
+    ├── components/
+    │   ├── ErrorBanner.js          # Domain restriction error alert banner
+    │   └── GoogleSignInButton.js   # Official Google-branded sign-in button
+    ├── context/
+    │   └── AuthContext.js          # Central authentication, OAuth & Supabase sync state
+    ├── screens/
+    │   ├── DashboardScreen.js      # Minimal Dashboard ("Hello, [Name]!" + Log Out button)
+    │   └── LoginScreen.js          # Login page with Google OAuth, normal login, and test chooser
+    ├── services/
+    │   └── supabase.js             # Supabase client, persistence, and audit logging
+    └── utils/
+        ├── domainValidator.js      # Core domain validation logic
+        └── domainValidator.test.js # Unit test suite
+```
+
+---
+
+## 📜 Complete Code Reference
 
 ### 1. `src/config.js`
 ```javascript
-/**
- * Application Configuration
- * Loaded dynamically from environment variables.
- * No domains, secrets, or passwords are hardcoded in the source code.
- */
-
 export const APP_CONFIG = {
-  // Official allowed domain read exclusively from environment variables
   ALLOWED_DOMAIN: (process.env.EXPO_PUBLIC_ALLOWED_DOMAIN || '').trim().toLowerCase(),
-
-  // Google OAuth 2.0 Client IDs
   GOOGLE_CLIENT_ID_WEB: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || '',
   GOOGLE_CLIENT_ID_IOS: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || '',
   GOOGLE_CLIENT_ID_ANDROID: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || '',
-
-  // Supabase Database Connection
   SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL || '',
   SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
-
-  // Optional list of admin emails (comma-separated in env)
   ADMIN_EMAILS: (process.env.EXPO_PUBLIC_ADMIN_EMAILS || '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
-
-  // Application Details
   APP_NAME: 'HB+ Secure Portal',
-  ORGANIZATION_NAME: 'HB+ Health & Fitness',
 };
 
-// Required exact error message for unauthorized domains
 export const RESTRICTED_DOMAIN_ERROR_MESSAGE =
   'Access restricted. Please login using your official domain email.';
 ```
-
----
 
 ### 2. `src/utils/domainValidator.js`
 ```javascript
 import { APP_CONFIG, RESTRICTED_DOMAIN_ERROR_MESSAGE } from '../config.js';
 
-/**
- * Validates whether an email belongs to the configured official domain.
- * Strictly adheres to dynamic domain comparison loaded from environment variables.
- *
- * @param {string} email - The email address to validate
- * @param {string} [allowedDomainOverride] - Optional override for testing
- * @returns {{ isValid: boolean, error: string | null, domain: string | null }}
- */
 export function validateEmailDomain(email, allowedDomainOverride = null) {
   const allowedDomain = (
     allowedDomainOverride !== null ? allowedDomainOverride : APP_CONFIG.ALLOWED_DOMAIN
@@ -280,31 +305,19 @@ export function validateEmailDomain(email, allowedDomainOverride = null) {
     .trim()
     .toLowerCase();
 
-  // 1. Ensure email is a non-empty string
   if (!email || typeof email !== 'string') {
-    return {
-      isValid: false,
-      error: 'Please enter a valid email address.',
-      domain: null,
-    };
+    return { isValid: false, error: 'Please enter a valid email address.', domain: null };
   }
 
   const cleanEmail = email.trim().toLowerCase();
-
-  // 2. Validate email structure
   const atIndex = cleanEmail.lastIndexOf('@');
+
   if (atIndex <= 0 || atIndex === cleanEmail.length - 1) {
-    return {
-      isValid: false,
-      error: 'Please enter a valid email address format.',
-      domain: null,
-    };
+    return { isValid: false, error: 'Please enter a valid email address format.', domain: null };
   }
 
-  // 3. Extract the domain part
   const domain = cleanEmail.substring(atIndex + 1);
 
-  // 4. Check if an allowed domain has been configured
   if (!allowedDomain) {
     return {
       isValid: false,
@@ -313,27 +326,13 @@ export function validateEmailDomain(email, allowedDomainOverride = null) {
     };
   }
 
-  // 5. Strict equality check on the domain
   if (domain !== allowedDomain) {
-    return {
-      isValid: false,
-      error: RESTRICTED_DOMAIN_ERROR_MESSAGE,
-      domain,
-    };
+    return { isValid: false, error: RESTRICTED_DOMAIN_ERROR_MESSAGE, domain };
   }
 
-  return {
-    isValid: true,
-    error: null,
-    domain,
-  };
+  return { isValid: true, error: null, domain };
 }
 
-/**
- * Extracts domain portion of an email.
- * @param {string} email
- * @returns {string}
- */
 export function extractDomain(email) {
   if (!email || typeof email !== 'string') return '';
   const atIndex = email.lastIndexOf('@');
@@ -341,422 +340,7 @@ export function extractDomain(email) {
 }
 ```
 
----
-
-### 3. `src/services/supabase.js`
-```javascript
-import { createClient } from '@supabase/supabase-js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
-import { APP_CONFIG } from '../config.js';
-
-const STORAGE_KEYS = {
-  ACTIVE_SESSION: '@hbplus_session_user',
-  LOCAL_USERS: '@hbplus_local_users',
-  AUDIT_LOGS: '@hbplus_audit_logs',
-};
-
-// Initialize Supabase Client if credentials are provided in .env
-let supabase = null;
-
-if (APP_CONFIG.SUPABASE_URL && APP_CONFIG.SUPABASE_ANON_KEY) {
-  try {
-    supabase = createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY, {
-      auth: {
-        storage: AsyncStorage,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false,
-      },
-    });
-    console.log('[Supabase] Initialized database client successfully.');
-  } catch (err) {
-    console.warn('[Supabase] Initialization error:', err);
-  }
-}
-
-export const isSupabaseConnected = () => Boolean(supabase);
-
-/**
- * Determine default role (admin / user) based on environment list or default
- * @param {string} email
- * @returns {'admin' | 'user'}
- */
-export function determineUserRole(email) {
-  if (!email) return 'user';
-  const cleanEmail = email.trim().toLowerCase();
-  if (APP_CONFIG.ADMIN_EMAILS.includes(cleanEmail)) {
-    return 'admin';
-  }
-  return 'user';
-}
-
-/**
- * Save / Upsert user profile to Supabase Database (with local storage fallback)
- * @param {Object} userProfile
- * @returns {Promise<Object>}
- */
-export async function saveUserToDatabase(userProfile) {
-  const timestamp = new Date().toISOString();
-  const role = userProfile.role || determineUserRole(userProfile.email);
-
-  const payload = {
-    id: userProfile.id || `user_${Date.now()}`,
-    email: userProfile.email.toLowerCase().trim(),
-    name: userProfile.name || userProfile.email.split('@')[0],
-    avatar_url: userProfile.avatarUrl || userProfile.avatar_url || '',
-    role: role,
-    auth_provider: userProfile.authProvider || 'google',
-    last_login_at: timestamp,
-  };
-
-  // 1. If Supabase is connected, save directly to Supabase DB table 'users'
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .upsert(payload, { onConflict: 'email' })
-        .select()
-        .single();
-
-      if (error) {
-        console.warn('[Supabase] Upsert error (falling back to local):', error.message);
-      } else if (data) {
-        await persistSessionLocally({ ...payload, ...data });
-        return { ...payload, ...data };
-      }
-    } catch (e) {
-      console.warn('[Supabase] Database call failed:', e);
-    }
-  }
-
-  // 2. Local AsyncStorage fallback ensuring full offline reliability
-  try {
-    const existingRaw = await AsyncStorage.getItem(STORAGE_KEYS.LOCAL_USERS);
-    const users = existingRaw ? JSON.parse(existingRaw) : [];
-    const index = users.findIndex((u) => u.email === payload.email);
-
-    if (index >= 0) {
-      users[index] = { ...users[index], ...payload };
-    } else {
-      payload.created_at = timestamp;
-      users.push(payload);
-    }
-
-    await AsyncStorage.setItem(STORAGE_KEYS.LOCAL_USERS, JSON.stringify(users));
-  } catch (err) {
-    console.warn('[Storage] Failed to save local user cache:', err);
-  }
-
-  await persistSessionLocally(payload);
-  return payload;
-}
-
-export async function persistSessionLocally(user) {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_SESSION, JSON.stringify(user));
-  } catch (e) {
-    console.warn('[Storage] Failed to persist session:', e);
-  }
-}
-
-export async function getLocalSession() {
-  try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    console.warn('[Storage] Failed to read session:', e);
-    return null;
-  }
-}
-
-export async function clearSessionLocally() {
-  try {
-    await AsyncStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
-    if (supabase) {
-      await supabase.auth.signOut().catch(() => {});
-    }
-  } catch (e) {
-    console.warn('[Storage] Failed to clear session:', e);
-  }
-}
-
-export async function logAuthEvent({ email, domain, status, reason }) {
-  const logEntry = {
-    id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    email: (email || 'unknown').toLowerCase(),
-    domain: domain || 'unknown',
-    status: status, // 'ALLOWED' or 'DENIED'
-    reason: reason || '',
-    platform: Platform.OS,
-    created_at: new Date().toISOString(),
-  };
-
-  if (supabase) {
-    try {
-      await supabase.from('audit_logs').insert([logEntry]);
-    } catch (e) {}
-  }
-
-  try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
-    const logs = raw ? JSON.parse(raw) : [];
-    logs.unshift(logEntry);
-    if (logs.length > 50) logs.pop();
-    await AsyncStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(logs));
-  } catch (e) {}
-}
-
-export { supabase };
-```
-
----
-
-### 4. `src/context/AuthContext.js`
-```javascript
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { APP_CONFIG, RESTRICTED_DOMAIN_ERROR_MESSAGE } from '../config.js';
-import { validateEmailDomain } from '../utils/domainValidator.js';
-import {
-  saveUserToDatabase,
-  getLocalSession,
-  clearSessionLocally,
-  logAuthEvent,
-  isSupabaseConnected,
-} from '../services/supabase.js';
-
-WebBrowser.maybeCompleteAuthSession();
-
-const AuthContext = createContext(null);
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const safeWebClientId =
-    APP_CONFIG.GOOGLE_CLIENT_ID_WEB || 'placeholder-web.apps.googleusercontent.com';
-  const safeIosClientId =
-    APP_CONFIG.GOOGLE_CLIENT_ID_IOS || 'placeholder-ios.apps.googleusercontent.com';
-  const safeAndroidClientId =
-    APP_CONFIG.GOOGLE_CLIENT_ID_ANDROID || 'placeholder-android.apps.googleusercontent.com';
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: safeWebClientId,
-    webClientId: safeWebClientId,
-    iosClientId: safeIosClientId,
-    androidClientId: safeAndroidClientId,
-    scopes: ['profile', 'email'],
-  });
-
-  // Restore session on mount
-  useEffect(() => {
-    async function restoreSession() {
-      try {
-        const storedUser = await getLocalSession();
-        if (storedUser && storedUser.email) {
-          const validation = validateEmailDomain(storedUser.email);
-          if (validation.isValid) {
-            setUser(storedUser);
-            setIsAuthenticated(true);
-          } else {
-            await clearSessionLocally();
-            setUser(null);
-            setIsAuthenticated(false);
-          }
-        }
-      } catch (err) {
-        console.warn('Session restoration error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    restoreSession();
-  }, []);
-
-  // Handle Google OAuth redirect response
-  useEffect(() => {
-    async function handleGoogleResponse() {
-      if (response?.type === 'success' && response.authentication?.accessToken) {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-          const res = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-            headers: {
-              Authorization: `Bearer ${response.authentication.accessToken}`,
-            },
-          });
-
-          if (!res.ok) {
-            throw new Error('Could not fetch user profile from Google.');
-          }
-
-          const googleUser = await res.json();
-          await authenticateUser({
-            email: googleUser.email,
-            name: googleUser.name || googleUser.email.split('@')[0],
-            avatarUrl: googleUser.picture || '',
-            authProvider: 'google',
-          });
-        } catch (err) {
-          const msg = err.message || 'Google authentication failed.';
-          setError(msg);
-          await logAuthEvent({
-            email: 'unknown',
-            domain: 'unknown',
-            status: 'DENIED',
-            reason: msg,
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      } else if (response?.type === 'error') {
-        setIsLoading(false);
-        setError(response.error?.message || 'Google sign-in encountered an error.');
-      } else if (response?.type === 'dismiss') {
-        setIsLoading(false);
-      }
-    }
-
-    if (response) {
-      handleGoogleResponse();
-    }
-  }, [response]);
-
-  // Core domain enforcement function
-  const authenticateUser = async ({ email, name, avatarUrl, authProvider = 'google' }) => {
-    setError(null);
-    const validation = validateEmailDomain(email);
-
-    if (!validation.isValid) {
-      setError(validation.error || RESTRICTED_DOMAIN_ERROR_MESSAGE);
-      await logAuthEvent({
-        email,
-        domain: validation.domain,
-        status: 'DENIED',
-        reason: validation.error || RESTRICTED_DOMAIN_ERROR_MESSAGE,
-      });
-
-      await clearSessionLocally();
-      setUser(null);
-      setIsAuthenticated(false);
-
-      return {
-        success: false,
-        error: validation.error || RESTRICTED_DOMAIN_ERROR_MESSAGE,
-      };
-    }
-
-    const userProfile = await saveUserToDatabase({
-      email,
-      name: name || email.split('@')[0],
-      avatarUrl: avatarUrl || '',
-      authProvider,
-    });
-
-    await logAuthEvent({
-      email,
-      domain: validation.domain,
-      status: 'ALLOWED',
-      reason: 'Domain verified successfully',
-    });
-
-    setUser(userProfile);
-    setIsAuthenticated(true);
-    return { success: true, user: userProfile };
-  };
-
-  const loginWithGoogle = async () => {
-    setError(null);
-    const hasClientId = Boolean(
-      APP_CONFIG.GOOGLE_CLIENT_ID_WEB ||
-      APP_CONFIG.GOOGLE_CLIENT_ID_IOS ||
-      APP_CONFIG.GOOGLE_CLIENT_ID_ANDROID
-    );
-
-    if (!hasClientId) {
-      return { requiresManualSelection: true };
-    }
-
-    try {
-      setIsLoading(true);
-      await promptAsync();
-      return { success: true };
-    } catch (err) {
-      setIsLoading(false);
-      setError(err.message || 'Failed to initialize Google login prompt.');
-      return { success: false, error: err.message };
-    }
-  };
-
-  const loginWithEmail = async (email, name = '') => {
-    setIsLoading(true);
-    try {
-      const result = await authenticateUser({
-        email,
-        name: name || email.split('@')[0],
-        avatarUrl: '',
-        authProvider: 'email',
-      });
-      return result;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    setIsLoading(true);
-    try {
-      await clearSessionLocally();
-      setUser(null);
-      setIsAuthenticated(false);
-      setError(null);
-    } catch (e) {
-      console.warn('Logout error:', e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const clearError = () => setError(null);
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated,
-        isLoading,
-        error,
-        allowedDomain: APP_CONFIG.ALLOWED_DOMAIN,
-        isSupabaseConnected: isSupabaseConnected(),
-        loginWithGoogle,
-        loginWithEmail,
-        logout,
-        clearError,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-```
-
----
-
-### 5. `src/screens/DashboardScreen.js`
+### 3. `src/screens/DashboardScreen.js`
 ```javascript
 import React from 'react';
 import {
@@ -803,11 +387,9 @@ export const DashboardScreen = () => {
             <FontAwesome5 name="user-check" size={28} color="#0D9488" />
           </View>
 
-          {/* Hello Greeting */}
           <Text style={styles.greetingTitle}>Hello, {displayName}!</Text>
           <Text style={styles.emailText}>{user.email}</Text>
 
-          {/* Role & Status */}
           <View style={styles.badgeRow}>
             <View
               style={[
@@ -845,7 +427,6 @@ export const DashboardScreen = () => {
 
           <View style={styles.divider} />
 
-          {/* Logout Button */}
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
@@ -882,7 +463,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     ...Platform.select({
       web: {
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
       },
       default: {
         elevation: 3,
@@ -936,7 +517,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   adminBadgeText: {
     color: '#6D28D9',
@@ -979,28 +559,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: '100%',
     gap: 8,
-    ...Platform.select({
-      web: {
-        cursor: 'pointer',
-        boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.2)',
-      },
-      default: {
-        elevation: 2,
-      },
-    }),
   },
   logoutButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
-    letterSpacing: 0.3,
   },
 });
 ```
 
----
-
-### 6. `src/screens/LoginScreen.js`
+### 4. `src/screens/LoginScreen.js`
 ```javascript
 import React, { useState } from 'react';
 import {
@@ -1300,14 +868,6 @@ const styles = StyleSheet.create({
     padding: 30,
     borderColor: '#E2E8F0',
     borderWidth: 1,
-    ...Platform.select({
-      web: {
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
-      },
-      default: {
-        elevation: 3,
-      },
-    }),
   },
   brandHeader: {
     alignItems: 'center',
@@ -1321,20 +881,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
-    ...Platform.select({
-      web: {
-        boxShadow: '0 6px 12px -2px rgba(13, 148, 136, 0.3)',
-      },
-      default: {
-        elevation: 3,
-      },
-    }),
   },
   appName: {
     fontSize: 22,
     fontWeight: '800',
     color: '#0F172A',
-    letterSpacing: 0.5,
   },
   appSubtitle: {
     fontSize: 13,
@@ -1397,7 +948,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   normalLoginSection: {
     width: '100%',
@@ -1436,15 +986,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 13,
     gap: 6,
-    ...Platform.select({
-      web: {
-        cursor: 'pointer',
-        boxShadow: '0 4px 6px -1px rgba(13, 148, 136, 0.2)',
-      },
-      default: {
-        elevation: 2,
-      },
-    }),
   },
   normalLoginBtnDisabled: {
     opacity: 0.6,
@@ -1453,7 +994,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 0.3,
   },
   footerInfo: {
     flexDirection: 'row',
@@ -1511,7 +1051,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     marginBottom: 16,
-    lineHeight: 18,
   },
   accountOption: {
     flexDirection: 'row',
@@ -1615,9 +1154,7 @@ const styles = StyleSheet.create({
 });
 ```
 
----
-
-### 7. `App.js`
+### 5. `App.js`
 ```javascript
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
@@ -1630,7 +1167,6 @@ import { DashboardScreen } from './src/screens/DashboardScreen.js';
 const RootNavigator = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  // Web Browser Route Guard & URL synchronization
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       if (!isLoading) {
@@ -1688,20 +1224,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    ...Platform.select({
-      web: {
-        boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)',
-      },
-      default: {
-        elevation: 4,
-      },
-    }),
   },
   loadingTitle: {
     fontSize: 20,
     fontWeight: '900',
     color: '#0F172A',
-    letterSpacing: 0.8,
   },
   loadingSubtitle: {
     fontSize: 13,
@@ -1714,191 +1241,3 @@ const styles = StyleSheet.create({
   },
 });
 ```
-
----
-
-### 8. `index.js`
-```javascript
-import { registerRootComponent } from 'expo';
-import App from './App';
-
-registerRootComponent(App);
-```
-
----
-
-### 9. `src/components/GoogleSignInButton.js`
-```javascript
-import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  View,
-  Platform,
-} from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
-
-export const GoogleSignInButton = ({ onPress, disabled, isLoading }) => {
-  return (
-    <TouchableOpacity
-      style={[styles.button, (disabled || isLoading) && styles.buttonDisabled]}
-      onPress={onPress}
-      disabled={disabled || isLoading}
-      activeOpacity={0.8}
-    >
-      {isLoading ? (
-        <ActivityIndicator size="small" color="#0D9488" style={styles.spinner} />
-      ) : (
-        <View style={styles.googleIconContainer}>
-          <FontAwesome5 name="google" size={18} color="#4285F4" />
-        </View>
-      )}
-      <Text style={styles.buttonText}>
-        {isLoading ? 'Verifying with Google...' : 'Sign in with Google'}
-      </Text>
-    </TouchableOpacity>
-  );
-};
-
-const styles = StyleSheet.create({
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderWidth: 1.5,
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    width: '100%',
-    ...Platform.select({
-      web: {
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-        cursor: 'pointer',
-      },
-      default: {
-        elevation: 1,
-      },
-    }),
-  },
-  buttonDisabled: {
-    opacity: 0.65,
-  },
-  googleIconContainer: {
-    marginRight: 12,
-  },
-  spinner: {
-    marginRight: 12,
-  },
-  buttonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1E293B',
-    letterSpacing: 0.2,
-  },
-});
-```
-
----
-
-### 10. `src/components/ErrorBanner.js`
-```javascript
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-export const ErrorBanner = ({ message, onDismiss, allowedDomain }) => {
-  if (!message) return null;
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.iconWrapper}>
-        <MaterialCommunityIcons name="alert-octagon" size={20} color="#DC2626" />
-      </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>Access Denied</Text>
-        <Text style={styles.message}>{message}</Text>
-        {allowedDomain ? (
-          <Text style={styles.hint}>
-            Allowed domain: <Text style={styles.hintHighlight}>@{allowedDomain}</Text>
-          </Text>
-        ) : null}
-      </View>
-      {onDismiss ? (
-        <TouchableOpacity
-          onPress={onDismiss}
-          style={styles.closeButton}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <MaterialCommunityIcons name="close" size={18} color="#991B1B" />
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FCA5A5',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 20,
-    ...Platform.select({
-      web: {
-        boxShadow: '0 2px 6px rgba(220, 38, 38, 0.08)',
-      },
-      default: {
-        elevation: 2,
-      },
-    }),
-  },
-  iconWrapper: {
-    marginRight: 12,
-    marginTop: 2,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#991B1B',
-    marginBottom: 2,
-  },
-  message: {
-    fontSize: 13,
-    color: '#B91C1C',
-    lineHeight: 18,
-  },
-  hint: {
-    fontSize: 12,
-    color: '#7F1D1D',
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  hintHighlight: {
-    fontWeight: '700',
-    color: '#991B1B',
-  },
-  closeButton: {
-    padding: 4,
-    marginLeft: 8,
-  },
-});
-```
-
----
-
-## 🔒 Security Summary
-
-1. **Zero Hardcoded Secrets or Domains**: All sensitive values and target domains are strictly loaded from environment variables.
-2. **Double Verification**: Validated on Google OAuth callback and on normal email entry, as well as on session restoration.
-3. **Fail-Safe Token Handling**: When an unauthorized email attempts authentication, credentials and tokens are discarded immediately.
-4. **URL Spoofing Guard**: In web environments, unauthenticated attempts to access `#/dashboard` automatically redirect to `#/login`.
